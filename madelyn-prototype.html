@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C.O.O.L. KIDS Learning Hub — Madelyn's World Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #7C3AED;
+    --purple-light: #A78BFA;
+    --yellow: #F59E0B;
+    --yellow-light: #FDE68A;
+    --green: #10B981;
+    --green-light: #6EE7B7;
+    --blue: #3B82F6;
+    --blue-light: #93C5FD;
+    --pink: #EC4899;
+    --pink-light: #F9A8D4;
+    --orange: #F97316;
+    --red: #EF4444;
+    --bg-warm: #FFF7ED;
+    --bg-sky: linear-gradient(180deg, #BFDBFE 0%, #E0F2FE 50%, #DCFCE7 100%);
+    --radius: 20px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #1a1a2e;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── SCREEN CONTAINER ── */
+  .screen {
+    width: 1024px; height: 768px;
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 24px;
+    overflow: hidden;
+    display: none;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  @keyframes glow { 0%,100%{box-shadow:0 0 12px 4px rgba(245,158,11,0.5)} 50%{box-shadow:0 0 28px 10px rgba(245,158,11,0.9)} }
+  @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes slideIn { from{opacity:0;transform:translateX(60px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.15)} 100%{transform:scale(1)} }
+  @keyframes confetti-fall {
+    0%{transform:translateY(-20px) rotate(0deg); opacity:1}
+    100%{transform:translateY(800px) rotate(720deg); opacity:0}
+  }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)}
+    60%{transform:translateX(-8px)} 80%{transform:translateX(8px)}
+  }
+  @keyframes correct-flash {
+    0%{background:rgba(16,185,129,0)} 30%{background:rgba(16,185,129,0.3)} 100%{background:rgba(16,185,129,0)}
+  }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(2deg)} }
+  @keyframes star-pop { 0%{transform:scale(0) rotate(-30deg)} 80%{transform:scale(1.2) rotate(5deg)} 100%{transform:scale(1) rotate(0)} }
+  @keyframes bubble-in { from{opacity:0;transform:scale(0.7) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+  .animate-bounce { animation: bounce 1.2s ease-in-out infinite; }
+  .animate-pulse { animation: pulse 2s ease-in-out infinite; }
+  .animate-glow { animation: glow 1.5s ease-in-out infinite; }
+  .animate-float { animation: float 3s ease-in-out infinite; }
+  .animate-fade { animation: fadeIn 0.5s ease forwards; }
+  .animate-pop { animation: pop 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
+  .animate-star { animation: star-pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
+
+  /* ── BTN BASE ── */
+  .btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 1.1rem;
+    border: none; border-radius: 50px;
+    padding: 14px 32px; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: var(--purple); color: white; box-shadow: 0 4px 16px rgba(124,58,237,0.4); }
+  .btn-yellow { background: var(--yellow); color: white; box-shadow: 0 4px 16px rgba(245,158,11,0.4); }
+  .btn-green { background: var(--green); color: white; box-shadow: 0 4px 16px rgba(16,185,129,0.4); }
+  .btn-outline { background: white; color: var(--purple); border: 3px solid var(--purple); }
+  .btn-back {
+    background: rgba(255,255,255,0.85); color: #555;
+    font-size: 0.9rem; padding: 8px 20px;
+    border: 2px solid #ddd; border-radius: 30px;
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+  }
+  .btn-back:hover { background: white; transform: translateY(-2px); }
+
+  /* ══════════════════════════════════════════
+     SCREEN 1 — WELCOME / SPLASH
+  ══════════════════════════════════════════ */
+  #screen-welcome {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    align-items: center; justify-content: center; flex-direction: column;
+    gap: 24px;
+  }
+  .cool-logo {
+    font-size: 5rem; font-weight: 900;
+    letter-spacing: 8px;
+    background: linear-gradient(135deg, #F59E0B, #EC4899, #7C3AED, #3B82F6);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 4px 20px rgba(245,158,11,0.4));
+  }
+  .cool-subtitle {
+    font-size: 1.5rem; font-weight: 700;
+    color: rgba(255,255,255,0.8); letter-spacing: 6px; text-transform: uppercase;
+  }
+  .cool-tagline {
+    font-size: 1.1rem; color: rgba(255,255,255,0.6);
+    margin-top: -8px;
+  }
+  .star-field {
+    position: absolute; inset: 0; pointer-events: none;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute; background: white; border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 2 — LEARNING HUB
+  ══════════════════════════════════════════ */
+  #screen-hub {
+    background: var(--bg-sky);
+    position: relative;
+  }
+  .hub-header {
+    background: rgba(255,255,255,0.7); backdrop-filter: blur(10px);
+    padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 2px solid rgba(255,255,255,0.8);
+  }
+  .hub-logo { font-size: 1.3rem; font-weight: 900; color: var(--purple); }
+  .hub-logo span { color: var(--yellow); }
+  .hub-scene {
+    flex: 1; position: relative; padding: 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hub-tooltip {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(124,58,237,0.9); color: white;
+    padding: 10px 24px; border-radius: 50px; font-weight: 700; font-size: 0.95rem;
+    animation: bounce 2s ease-in-out infinite;
+    white-space: nowrap;
+  }
+  .hub-tooltip::after {
+    content:''; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%);
+    border-left:8px solid transparent; border-right:8px solid transparent;
+    border-top:8px solid rgba(124,58,237,0.9);
+  }
+  .characters-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 20px; width: 100%; max-width: 820px;
+    padding-top: 40px;
+  }
+  .char-node {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer;
+  }
+  .char-avatar {
+    width: 120px; height: 120px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; position: relative;
+    transition: transform 0.2s;
+    border: 4px solid white;
+    box-shadow: var(--shadow);
+  }
+  .char-node.unlocked .char-avatar { animation: pulse 2.5s ease-in-out infinite; }
+  .char-node.locked .char-avatar { filter: grayscale(0.8) opacity(0.7); }
+  .char-node.unlocked:hover .char-avatar { transform: scale(1.1) translateY(-4px); }
+  .char-progress-ring {
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    background: conic-gradient(var(--green) calc(var(--pct) * 1%), transparent 0);
+    opacity: 0.85;
+  }
+  .char-ring-track {
+    position: absolute; inset: -6px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.4);
+  }
+  .char-lock {
+    position: absolute; bottom: 0; right: 0;
+    background: #374151; color: white; border-radius: 50%;
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+  }
+  .char-name { font-weight: 800; font-size: 0.95rem; color: #374151; text-align: center; }
+  .char-subject { font-size: 0.75rem; color: #6B7280; font-weight: 600; }
+  .char-node.locked .char-name { color: #9CA3AF; }
+  .madelyn-bg { background: linear-gradient(135deg, #FDE68A, #F59E0B); }
+  .steve-bg { background: linear-gradient(135deg, #BAE6FD, #3B82F6); }
+  .locked-bg { background: linear-gradient(135deg, #E5E7EB, #D1D5DB); }
+  .hub-footer {
+    padding: 12px 20px; text-align: center;
+    background: rgba(255,255,255,0.6);
+    font-size: 0.8rem; color: #6B7280; font-weight: 600;
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 3 — MADELYN'S CLASSROOM
+  ══════════════════════════════════════════ */
+  #screen-classroom {
+    background: linear-gradient(180deg, #FEF3C7 0%, #FDE68A 100%);
+    flex-direction: row;
+  }
+  .sidebar {
+    width: 220px; background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border-right: 2px solid rgba(245,158,11,0.3);
+    display: flex; flex-direction: column;
+    padding: 16px 12px;
+    gap: 8px; flex-shrink: 0;
+  }
+  .sidebar-char {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px; background: var(--yellow-light);
+    border-radius: 14px; margin-bottom: 8px;
+  }
+  .sidebar-char-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #FDE68A, #F59E0B);
+    display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+    border: 2px solid var(--yellow);
+  }
+  .sidebar-char-name { font-weight: 800; font-size: 0.95rem; color: #92400E; }
+  .sidebar-char-sub { font-size: 0.7rem; color: #B45309; font-weight: 600; }
+  .sidebar-section { font-size: 0.7rem; font-weight: 800; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; padding: 4px 8px; }
+  .sidebar-unit {
+    padding: 10px 12px; border-radius: 12px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .sidebar-unit:hover { background: var(--yellow-light); }
+  .sidebar-unit.active { background: var(--yellow); }
+  .sidebar-unit.locked { opacity: 0.6; cursor: not-allowed; }
+  .unit-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--purple); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 800; flex-shrink: 0;
+  }
+  .sidebar-unit.locked .unit-num { background: #9CA3AF; }
+  .unit-info { flex: 1; min-width: 0; }
+  .unit-title { font-size: 0.8rem; font-weight: 700; color: #374151; }
+  .unit-std { font-size: 0.65rem; color: #6B7280; font-weight: 600; }
+  .sidebar-divider { border: none; border-top: 1px solid #E5E7EB; margin: 4px 0; }
+  .sidebar-nav-btn {
+    padding: 8px 12px; border-radius: 12px;
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; transition: background 0.2s;
+    font-size: 0.82rem; font-weight: 700; color: #6B7280;
+  }
+  .sidebar-nav-btn:hover { background: #F3F4F6; color: #374151; }
+  .sidebar-nav-icon { font-size: 1rem; }
+  .back-hub-btn {
+    margin-top: auto;
+    background: var(--purple-light); color: white;
+    border: none; border-radius: 12px; padding: 10px 12px;
+    font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.85rem;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    transition: background 0.2s;
+  }
+  .back-hub-btn:hover { background: var(--purple); }
+
+  .classroom-scene {
+    flex: 1; position: relative; overflow: hidden;
+  }
+  .classroom-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #FEF9C3 0%, #FFFBEB 60%, #D97706 100%);
+  }
+  /* Room elements (CSS-drawn) */
+  .room-wall {
+    position: absolute; inset: 0 0 30% 0;
+    background: linear-gradient(180deg, #FEFCE8 0%, #FEF3C7 100%);
+  }
+  .room-floor {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 30%;
+    background: linear-gradient(180deg, #D97706 0%, #B45309 100%);
+    border-top: 4px solid #92400E;
+  }
+  .room-rug {
+    position: absolute; bottom: 18%; left: 15%; right: 10%;
+    height: 18%; border-radius: 50%;
+    background: radial-gradient(ellipse, #FDE68A 0%, #F59E0B 60%, #D97706 100%);
+    border: 4px solid #92400E; opacity: 0.7;
+  }
+  .chalkboard {
+    position: absolute; top: 6%; left: 5%; width: 40%; height: 38%;
+    background: #1a472a;
+    border: 8px solid #92400E; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 4px;
+    box-shadow: 4px 4px 16px rgba(0,0,0,0.3);
+  }
+  .chalk-text { color: rgba(255,255,255,0.85); font-size: 0.75rem; font-family: 'Nunito', sans-serif; font-weight: 700; }
+  .number-line {
+    position: absolute; top: 52%; left: 5%; right: 50%;
+    height: 24px;
+    display: flex; align-items: center; gap: 2px;
+  }
+  .num-tick {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--purple); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 800; flex-shrink: 0;
+  }
+  .bookshelf {
+    position: absolute; top: 6%; right: 3%; width: 20%;
+    background: #92400E; border-radius: 4px; padding: 4px;
+    box-shadow: 4px 4px 16px rgba(0,0,0,0.2);
+  }
+  .book {
+    height: 32px; border-radius: 2px; margin: 2px 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; color: white; font-weight: 700;
+  }
+  .madelyn-char {
+    position: absolute; bottom: 22%; right: 5%;
+    font-size: 5rem; cursor: pointer;
+    transition: transform 0.2s;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+  }
+  .madelyn-char:hover { transform: scale(1.05); }
+
+  /* SPEECH BUBBLE */
+  .speech-bubble {
+    position: absolute; bottom: 68%; right: 14%;
+    background: white; border-radius: 20px;
+    padding: 14px 18px; max-width: 240px;
+    box-shadow: var(--shadow);
+    font-size: 0.85rem; font-weight: 700; color: #374151; line-height: 1.4;
+    animation: bubble-in 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+    z-index: 10;
+  }
+  .speech-bubble::after {
+    content: ''; position: absolute; bottom: -14px; right: 32px;
+    border-left: 12px solid transparent; border-right: 12px solid transparent;
+    border-top: 14px solid white;
+  }
+  .speech-bubble .speaker { font-size: 0.7rem; color: var(--yellow); font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* HOTSPOTS */
+  .hotspot {
+    position: absolute; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    transition: transform 0.2s;
+    z-index: 5;
+  }
+  .hotspot:hover { transform: scale(1.12) translateY(-4px); }
+  .hotspot-icon {
+    font-size: 3rem;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    animation: glow 1.8s ease-in-out infinite;
+  }
+  .hotspot-label {
+    background: rgba(255,255,255,0.92); border-radius: 20px;
+    padding: 3px 10px; font-size: 0.7rem; font-weight: 800;
+    color: #374151; white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .hotspot-glow-ring {
+    position: absolute; inset: -6px; border-radius: 50%;
+    animation: glow 1.5s ease-in-out infinite; opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 4 — STORY HOOK
+  ══════════════════════════════════════════ */
+  #screen-story {
+    background: linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%);
+    align-items: center; justify-content: center;
+  }
+  .story-container {
+    max-width: 760px; width: 100%;
+    display: flex; gap: 32px; align-items: center; padding: 32px;
+  }
+  .story-char-side {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .story-char-emoji { font-size: 8rem; animation: float 3s ease-in-out infinite; }
+  .story-char-name { font-weight: 800; color: var(--purple); font-size: 1rem; }
+  .story-content-side { flex: 1; }
+  .story-stage-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--purple); color: white;
+    padding: 6px 16px; border-radius: 50px; font-size: 0.8rem; font-weight: 800;
+    margin-bottom: 16px; letter-spacing: 0.5px;
+  }
+  .story-title {
+    font-size: 1.8rem; font-weight: 900; color: #1F2937;
+    line-height: 1.2; margin-bottom: 16px;
+  }
+  .story-body {
+    background: white; border-radius: var(--radius);
+    padding: 20px 24px; box-shadow: var(--shadow);
+    font-size: 1rem; line-height: 1.7; color: #374151;
+    border-left: 5px solid var(--yellow); margin-bottom: 20px;
+  }
+  .story-body strong { color: var(--purple); }
+  .story-problem {
+    background: linear-gradient(135deg, var(--purple), var(--purple-light));
+    color: white; border-radius: var(--radius);
+    padding: 16px 20px; font-size: 1rem; font-weight: 700;
+    line-height: 1.5; margin-bottom: 24px;
+  }
+  .story-standard {
+    display: flex; align-items: center; gap: 8px;
+    background: #EDE9FE; border-radius: 12px; padding: 10px 14px;
+    font-size: 0.8rem; color: var(--purple); font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .std-badge {
+    background: var(--purple); color: white; border-radius: 6px;
+    padding: 2px 8px; font-size: 0.75rem; font-weight: 800;
+  }
+  .level-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .level-chip {
+    background: var(--green); color: white;
+    border-radius: 50px; padding: 4px 14px;
+    font-size: 0.8rem; font-weight: 800;
+  }
+  .progress-dots-row {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .pdot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #E5E7EB;
+  }
+  .pdot.done { background: var(--green); }
+  .pdot.current { background: var(--purple); animation: pulse 1.5s ease-in-out infinite; width: 14px; height: 14px; }
+  .story-top-bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.7); backdrop-filter: blur(8px);
+    padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 5 — GAME
+  ══════════════════════════════════════════ */
+  #screen-game {
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+    flex-direction: column;
+  }
+  .game-topbar {
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(8px);
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 2px solid rgba(124,58,237,0.15);
+    flex-shrink: 0;
+  }
+  .game-level { font-weight: 800; color: var(--purple); font-size: 0.9rem; }
+  .game-progress-dots { display: flex; gap: 8px; align-items: center; }
+  .gpd { width: 12px; height: 12px; border-radius: 50%; background: #E5E7EB; transition: all 0.3s; }
+  .gpd.done { background: var(--green); transform: scale(1); }
+  .gpd.current { background: var(--purple); animation: pulse 1.2s infinite; width: 16px; height: 16px; }
+  .game-exit { background: none; border: 2px solid #E5E7EB; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .game-exit:hover { background: #FEE2E2; border-color: var(--red); }
+
+  .game-area {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 20px; gap: 24px;
+  }
+  .game-question-card {
+    background: white; border-radius: 24px; padding: 24px 32px;
+    box-shadow: var(--shadow); text-align: center; max-width: 640px; width: 100%;
+    border-top: 5px solid var(--purple);
+  }
+  .game-q-label { font-size: 0.75rem; font-weight: 800; color: var(--purple-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .game-q-text { font-size: 1.25rem; font-weight: 800; color: #1F2937; line-height: 1.4; }
+  .game-q-visual { margin-top: 16px; display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .apple-group {
+    background: #FEF3C7; border: 3px solid var(--yellow);
+    border-radius: 16px; padding: 8px 12px;
+    display: flex; flex-wrap: wrap; gap: 3px; max-width: 80px;
+    justify-content: center; align-items: center;
+  }
+  .apple { font-size: 1.1rem; }
+  .times-sign { font-size: 2rem; font-weight: 900; color: var(--purple); }
+  .game-feedback-overlay {
+    position: absolute; inset: 0; pointer-events: none;
+    border-radius: 24px;
+  }
+  .game-feedback-correct { animation: correct-flash 0.6s forwards; }
+  .game-feedback-wrong { animation: shake 0.4s forwards; }
+
+  .answer-grid {
+    display: flex; gap: 16px; max-width: 640px; width: 100%; justify-content: center;
+  }
+  .answer-card {
+    flex: 1; min-height: 100px; max-width: 180px;
+    background: white; border-radius: 20px;
+    border: 3px solid #E5E7EB;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; padding: 16px 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .answer-card:hover { border-color: var(--purple-light); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(124,58,237,0.2); }
+  .answer-card .ans-emoji { font-size: 1.8rem; margin-bottom: 4px; }
+  .answer-card .ans-text { font-size: 1.2rem; font-weight: 800; color: #374151; }
+  .answer-card.correct { border-color: var(--green); background: #ECFDF5; animation: correct-flash 0.6s; }
+  .answer-card.wrong { border-color: var(--red); animation: shake 0.4s; }
+  .answer-card.disabled { pointer-events: none; }
+  .game-hint-row { font-size: 0.8rem; color: #9CA3AF; font-weight: 600; }
+
+  /* ══════════════════════════════════════════
+     SCREEN 6 — ASSESSMENT
+  ══════════════════════════════════════════ */
+  #screen-assessment {
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    flex-direction: column;
+  }
+  .assessment-header {
+    background: var(--blue); color: white;
+    padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .assessment-title { font-size: 1.1rem; font-weight: 800; }
+  .assessment-standard-chip {
+    background: rgba(255,255,255,0.2); border-radius: 50px;
+    padding: 4px 14px; font-size: 0.8rem; font-weight: 700;
+  }
+  .assessment-body {
+    flex: 1; padding: 24px 40px; display: flex; flex-direction: column; gap: 16px;
+    overflow-y: auto;
+  }
+  .assessment-intro {
+    background: white; border-radius: 16px; padding: 16px 20px;
+    border-left: 5px solid var(--blue); font-size: 0.9rem; color: #374151;
+    font-weight: 600; line-height: 1.5;
+  }
+  .assessment-q {
+    background: white; border-radius: 16px; padding: 18px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .aq-num { font-size: 0.75rem; font-weight: 800; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .aq-text { font-size: 0.95rem; font-weight: 700; color: #1F2937; margin-bottom: 12px; line-height: 1.4; }
+  .aq-options { display: flex; gap: 10px; flex-wrap: wrap; }
+  .aq-option {
+    padding: 8px 20px; border-radius: 50px;
+    border: 2.5px solid #E5E7EB; background: white;
+    font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.9rem;
+    cursor: pointer; transition: all 0.2s; color: #374151;
+  }
+  .aq-option:hover { border-color: var(--blue); color: var(--blue); background: #EFF6FF; }
+  .aq-option.selected { border-color: var(--blue); background: var(--blue); color: white; }
+  .aq-option.correct-ans { border-color: var(--green); background: var(--green); color: white; pointer-events: none; }
+  .aq-option.wrong-ans { border-color: var(--red); background: #FEF2F2; color: var(--red); }
+  .standards-panel {
+    background: #EDE9FE; border-radius: 16px; padding: 16px 20px;
+    border: 2px solid var(--purple-light);
+  }
+  .std-panel-title { font-size: 0.8rem; font-weight: 800; color: var(--purple); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .std-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .std-code { background: var(--purple); color: white; border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; font-weight: 800; flex-shrink: 0; white-space: nowrap; }
+  .std-desc { font-size: 0.8rem; color: #4B5563; font-weight: 600; line-height: 1.4; }
+  .iready-panel {
+    background: linear-gradient(135deg, #DBEAFE, #EFF6FF);
+    border-radius: 16px; padding: 14px 18px;
+    border: 2px dashed var(--blue);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .iready-logo { font-size: 2rem; }
+  .iready-text { flex: 1; }
+  .iready-title { font-size: 0.85rem; font-weight: 800; color: var(--blue); }
+  .iready-desc { font-size: 0.75rem; color: #4B5563; font-weight: 600; }
+  .iready-btn {
+    background: var(--blue); color: white; border: none; border-radius: 50px;
+    padding: 8px 18px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.8rem;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .iready-btn:hover { background: #1D4ED8; transform: translateY(-2px); }
+  .assessment-footer {
+    padding: 14px 40px; background: rgba(255,255,255,0.7);
+    border-top: 1px solid #BFDBFE;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 7 — ASSESSMENT RESULTS
+  ══════════════════════════════════════════ */
+  #screen-results {
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .results-card {
+    background: white; border-radius: 28px;
+    padding: 32px 40px; width: 100%; max-width: 700px;
+    box-shadow: var(--shadow);
+  }
+  .results-header { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
+  .results-char { font-size: 5rem; animation: float 3s ease-in-out infinite; }
+  .results-title-group {}
+  .results-score-big { font-size: 3rem; font-weight: 900; line-height: 1; }
+  .results-score-big.great { color: var(--green); }
+  .results-score-big.good { color: var(--yellow); }
+  .results-score-big.try { color: var(--orange); }
+  .results-message { font-size: 1rem; font-weight: 700; color: #374151; margin-top: 4px; }
+  .results-stats { display: flex; gap: 16px; margin-bottom: 24px; }
+  .stat-box {
+    flex: 1; background: #F9FAFB; border-radius: 16px; padding: 14px;
+    text-align: center; border: 2px solid #E5E7EB;
+  }
+  .stat-num { font-size: 1.8rem; font-weight: 900; }
+  .stat-label { font-size: 0.75rem; font-weight: 700; color: #6B7280; margin-top: 2px; }
+  .stat-box.correct-stat .stat-num { color: var(--green); }
+  .stat-box.wrong-stat .stat-num { color: var(--red); }
+  .stat-box.pct-stat .stat-num { color: var(--blue); }
+  .results-breakdown { margin-bottom: 20px; }
+  .results-breakdown-title { font-size: 0.8rem; font-weight: 800; color: #6B7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .result-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 10px; margin-bottom: 6px;
+    font-size: 0.85rem; font-weight: 600;
+  }
+  .result-row.r-correct { background: #ECFDF5; color: #065F46; }
+  .result-row.r-wrong { background: #FEF2F2; color: #991B1B; }
+  .result-icon { font-size: 1rem; flex-shrink: 0; }
+  .result-q-text { flex: 1; }
+  .result-answer { font-weight: 800; }
+  .claim-badge-btn {
+    position: absolute; bottom: 28px; right: 40px;
+    background: linear-gradient(135deg, var(--yellow), var(--orange));
+    color: white; border: none; border-radius: 50px;
+    padding: 14px 28px; font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 1rem; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(245,158,11,0.5);
+    transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+  }
+  .claim-badge-btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 28px rgba(245,158,11,0.6); }
+
+  /* ══════════════════════════════════════════
+     SCREEN 8 — CONGRATULATIONS
+  ══════════════════════════════════════════ */
+  #screen-congrats {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    align-items: center; justify-content: center; overflow: hidden;
+  }
+  .congrats-inner {
+    text-align: center; z-index: 10; position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .congrats-char { font-size: 7rem; animation: bounce 1s ease-in-out infinite; }
+  .congrats-title {
+    font-size: 3rem; font-weight: 900;
+    background: linear-gradient(135deg, #F59E0B, #EC4899);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .congrats-message { font-size: 1.1rem; color: rgba(255,255,255,0.85); font-weight: 700; max-width: 500px; line-height: 1.5; }
+  .badge-container {
+    position: relative; margin: 8px 0;
+  }
+  .badge-emoji { font-size: 5rem; animation: star-pop 0.5s 0.3s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+  .badge-sparkles {
+    position: absolute; inset: -20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sparkle {
+    position: absolute; font-size: 1.5rem;
+    animation: star-pop 0.4s ease both;
+  }
+  .badge-name {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: white; border-radius: 50px; padding: 6px 20px;
+    font-size: 0.95rem; font-weight: 800;
+    box-shadow: 0 4px 20px rgba(245,158,11,0.5);
+    margin-top: -8px;
+  }
+  .stars-row { display: flex; gap: 8px; justify-content: center; font-size: 2rem; }
+  .confetti-piece {
+    position: absolute; width: 10px; height: 10px; border-radius: 2px;
+    animation: confetti-fall linear forwards;
+    pointer-events: none; z-index: 5;
+  }
+  .congrats-btns { display: flex; gap: 12px; margin-top: 4px; }
+
+  /* ══════════════════════════════════════════
+     SHARED NAV & HELPERS
+  ══════════════════════════════════════════ */
+  .top-nav-bar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+    padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.75); backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  .screen-title { font-weight: 800; font-size: 0.9rem; color: #374151; }
+
+  /* Progress indicator for game */
+  .game-q-counter { font-size: 0.8rem; font-weight: 700; color: #6B7280; }
+
+  /* ── Tooltip / Coming Soon ── */
+  .coming-soon-tooltip {
+    position: fixed; z-index: 1000;
+    background: #1F2937; color: white;
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 0.85rem; font-weight: 700;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.2s;
+    transform: translateX(-50%);
+  }
+  .coming-soon-tooltip.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     SCREEN 1 — WELCOME
+═══════════════════════════════════ -->
+<div id="screen-welcome" class="screen active">
+  <div class="star-field" id="starField"></div>
+  <div class="cool-logo animate-bounce">C.O.O.L.</div>
+  <div class="cool-subtitle">Kids Learning Hub</div>
+  <div class="cool-tagline">✨ Learning is COOL! ✨</div>
+  <div style="display:flex;gap:16px;margin-top:16px;justify-content:center;flex-wrap:wrap;">
+    <div onclick="selectProfile('Emma')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#FDE68A,#F59E0B);display:flex;align-items:center;justify-content:center;font-size:2.5rem;border:4px solid rgba(255,255,255,0.5);box-shadow:0 4px 20px rgba(0,0,0,0.3);">🌟</div>
+      <span style="color:white;font-weight:800;font-size:0.9rem;">Emma</span>
+    </div>
+    <div onclick="selectProfile('Alex')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#BAE6FD,#3B82F6);display:flex;align-items:center;justify-content:center;font-size:2.5rem;border:4px solid rgba(255,255,255,0.5);box-shadow:0 4px 20px rgba(0,0,0,0.3);">🚀</div>
+      <span style="color:white;font-weight:800;font-size:0.9rem;">Alex</span>
+    </div>
+    <div onclick="selectProfile('Mia')" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#F9A8D4,#EC4899);display:flex;align-items:center;justify-content:center;font-size:2.5rem;border:4px solid rgba(255,255,255,0.5);box-shadow:0 4px 20px rgba(0,0,0,0.3);">🦋</div>
+      <span style="color:white;font-weight:800;font-size:0.9rem;">Mia</span>
+    </div>
+  </div>
+  <button class="btn btn-yellow animate-pulse" onclick="goTo('screen-hub')" style="margin-top:8px;font-size:1.2rem;padding:16px 48px;">
+    Let's Go! 🎉
+  </button>
+  <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;font-weight:600;">SR1 — Making Education, Health and Technology Available to All</p>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 2 — LEARNING HUB
+═══════════════════════════════════ -->
+<div id="screen-hub" class="screen">
+  <div class="hub-header">
+    <div class="hub-logo">C.O.O.L. <span>KIDS</span> Learning Hub</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FDE68A,#F59E0B);display:flex;align-items:center;justify-content:center;font-size:1.1rem;border:2px solid var(--yellow);">🌟</div>
+      <span style="font-weight:800;font-size:0.9rem;color:#374151;" id="hubPlayerName">Emma</span>
+      <button class="btn-back" onclick="goTo('screen-welcome')">← Switch</button>
+    </div>
+  </div>
+  <div class="hub-scene">
+    <div class="hub-tooltip">👆 Click a friend to start your adventure!</div>
+    <div class="characters-grid">
+      <!-- Madelyn -->
+      <div class="char-node unlocked" onclick="enterMadelyn()">
+        <div class="char-avatar madelyn-bg">
+          <div class="char-ring-track"></div>
+          <div class="char-progress-ring" style="--pct:40"></div>
+          🧮
+        </div>
+        <div class="char-name">Madelyn</div>
+        <div class="char-subject">Mathematics</div>
+      </div>
+      <!-- Steve -->
+      <div class="char-node unlocked" onclick="showComingSoon(this,'Steve — Reading World coming soon!')">
+        <div class="char-avatar steve-bg">
+          <div class="char-ring-track"></div>
+          <div class="char-progress-ring" style="--pct:10"></div>
+          📚
+        </div>
+        <div class="char-name">Steve</div>
+        <div class="char-subject">Reading & Literacy</div>
+      </div>
+      <!-- Locked characters -->
+      <div class="char-node locked" onclick="showComingSoon(this,'Ardie — Coming in Phase 4!')">
+        <div class="char-avatar locked-bg">🎨<div class="char-lock">🔒</div></div>
+        <div class="char-name">Ardie</div>
+        <div class="char-subject">Art & Creativity</div>
+      </div>
+      <div class="char-node locked" onclick="showComingSoon(this,'Beckie — Coming in Phase 4!')">
+        <div class="char-avatar locked-bg">💻<div class="char-lock">🔒</div></div>
+        <div class="char-name">Beckie</div>
+        <div class="char-subject">Technology</div>
+      </div>
+      <div class="char-node locked" onclick="showComingSoon(this,'Ignacio — Coming in Phase 4!')">
+        <div class="char-avatar locked-bg">⚙️<div class="char-lock">🔒</div></div>
+        <div class="char-name">Ignacio</div>
+        <div class="char-subject">Engineering</div>
+      </div>
+      <div class="char-node locked" onclick="showComingSoon(this,'Mary Ann — Coming in Phase 4!')">
+        <div class="char-avatar locked-bg">🐾<div class="char-lock">🔒</div></div>
+        <div class="char-name">Mary Ann</div>
+        <div class="char-subject">Life Science</div>
+      </div>
+      <div class="char-node locked" onclick="showComingSoon(this,'Ryan — Coming in Phase 4!')">
+        <div class="char-avatar locked-bg">🎵<div class="char-lock">🔒</div></div>
+        <div class="char-name">Ryan</div>
+        <div class="char-subject">Music & Rhymes</div>
+      </div>
+      <div class="char-node locked" onclick="showComingSoon(this,'Volomer — Coming in Phase 4!')">
+        <div class="char-avatar locked-bg">🔭<div class="char-lock">🔒</div></div>
+        <div class="char-name">Volomer</div>
+        <div class="char-subject">Astronomy</div>
+      </div>
+    </div>
+  </div>
+  <div class="hub-footer">Emma · 2 badges earned · Madelyn's World 40% complete</div>
+  <div id="comingSoonTip" class="coming-soon-tooltip"></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 3 — MADELYN'S CLASSROOM
+═══════════════════════════════════ -->
+<div id="screen-classroom" class="screen">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-char">
+      <div class="sidebar-char-avatar">🧮</div>
+      <div>
+        <div class="sidebar-char-name">Madelyn's World</div>
+        <div class="sidebar-char-sub">Mathematics</div>
+      </div>
+    </div>
+    <div class="sidebar-section">Units</div>
+    <div class="sidebar-unit active">
+      <div class="unit-num">1</div>
+      <div class="unit-info">
+        <div class="unit-title">Multiplication Groups</div>
+        <div class="unit-std">3.OA.1 · 3.OA.2</div>
+      </div>
+    </div>
+    <div class="sidebar-unit locked">
+      <div class="unit-num">2</div>
+      <div class="unit-info">
+        <div class="unit-title">Division Stories</div>
+        <div class="unit-std">3.OA.3 · 3.OA.4</div>
+      </div>
+      🔒
+    </div>
+    <div class="sidebar-unit locked">
+      <div class="unit-num">3</div>
+      <div class="unit-info">
+        <div class="unit-title">Patterns & Properties</div>
+        <div class="unit-std">3.OA.5–9</div>
+      </div>
+      🔒
+    </div>
+    <hr class="sidebar-divider">
+    <div class="sidebar-nav-btn"><span class="sidebar-nav-icon">🎬</span> Videos</div>
+    <div class="sidebar-nav-btn"><span class="sidebar-nav-icon">📄</span> Worksheets</div>
+    <div class="sidebar-nav-btn"><span class="sidebar-nav-icon">🏆</span> Rewards</div>
+    <div class="sidebar-nav-btn"><span class="sidebar-nav-icon">📐</span> Standards</div>
+    <button class="back-hub-btn" onclick="goTo('screen-hub')">🏠 Back to Hub</button>
+  </div>
+
+  <!-- CLASSROOM SCENE -->
+  <div class="classroom-scene" id="classroomScene">
+    <div class="room-wall"></div>
+    <div class="room-floor"></div>
+    <div class="room-rug"></div>
+
+    <!-- Chalkboard -->
+    <div class="chalkboard">
+      <div class="chalk-text">3 × 4 = ?</div>
+      <div class="chalk-text">5 × 2 = ?</div>
+      <div class="chalk-text" style="margin-top:4px;font-size:0.6rem;opacity:0.7;">Standard 3.OA.1</div>
+    </div>
+
+    <!-- Number line -->
+    <div class="number-line">
+      <div class="num-tick">0</div><div class="num-tick">3</div><div class="num-tick">6</div>
+      <div class="num-tick">9</div><div class="num-tick">12</div><div class="num-tick">15</div>
+    </div>
+
+    <!-- Bookshelf -->
+    <div class="bookshelf" style="top:6%;right:3%;width:16%;">
+      <div class="book" style="background:#7C3AED;">Math</div>
+      <div class="book" style="background:#F59E0B;">Count</div>
+      <div class="book" style="background:#10B981;">Groups</div>
+      <div class="book" style="background:#3B82F6;">Times</div>
+    </div>
+
+    <!-- HOTSPOT 1: Number Train (3.OA.1) -->
+    <div class="hotspot" style="left:14%;bottom:32%;" onclick="startActivity('train')">
+      <div class="hotspot-icon">🚂</div>
+      <div class="hotspot-label">🌟 Multiplication Train</div>
+    </div>
+
+    <!-- HOTSPOT 2: Apple Baskets (3.OA.1) -->
+    <div class="hotspot" style="left:38%;bottom:29%;" onclick="startActivity('baskets')">
+      <div class="hotspot-icon">🧺</div>
+      <div class="hotspot-label">🌟 Apple Groups</div>
+    </div>
+
+    <!-- HOTSPOT 3: Counting Blocks (3.OA.1) -->
+    <div class="hotspot" style="left:60%;bottom:32%;" onclick="startActivity('blocks')">
+      <div class="hotspot-icon">🎲</div>
+      <div class="hotspot-label">🌟 Array Arrays</div>
+    </div>
+
+    <!-- Clock on wall -->
+    <div style="position:absolute;top:10%;right:22%;font-size:2.5rem;">🕐</div>
+
+    <!-- Globe -->
+    <div style="position:absolute;top:8%;left:48%;font-size:2rem;">🌍</div>
+
+    <!-- Madelyn character -->
+    <div class="madelyn-char" id="madelyChar" onclick="toggleSpeech()">🧒‍♀️</div>
+
+    <!-- Speech bubble (shown initially) -->
+    <div class="speech-bubble" id="classroomSpeech">
+      <div class="speaker">Madelyn 🧮</div>
+      Welcome to my Math World! I need your help! Click on something to start! 🌟
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 4 — STORY HOOK
+═══════════════════════════════════ -->
+<div id="screen-story" class="screen">
+  <div class="top-nav-bar">
+    <button class="btn-back" onclick="goTo('screen-classroom')">← Madelyn's World</button>
+    <div class="level-bar">
+      <div class="level-chip">Level 1</div>
+      <div class="progress-dots-row">
+        <div class="pdot current"></div>
+        <div class="pdot"></div>
+        <div class="pdot"></div>
+        <div class="pdot"></div>
+        <div class="pdot"></div>
+      </div>
+    </div>
+    <div style="width:80px;"></div>
+  </div>
+
+  <div class="story-container" style="margin-top:48px;">
+    <div class="story-char-side">
+      <div class="story-char-emoji">🧒‍♀️</div>
+      <div class="story-char-name">Madelyn</div>
+      <div style="background:#EDE9FE;border-radius:12px;padding:6px 12px;font-size:0.75rem;font-weight:700;color:var(--purple);text-align:center;">
+        🍎 Apple Baskets<br/>Adventure
+      </div>
+    </div>
+    <div class="story-content-side">
+      <div class="story-stage-badge">📖 Stage 1 — The Story</div>
+      <div class="story-title">Oh no! My apple baskets are all mixed up! 🍎</div>
+      <div class="story-body">
+        "I was setting up my <strong>multiplication fair</strong> in my Math World, and all of my apple baskets got knocked over! Each basket was supposed to have the <strong>same number of apples</strong>. Now I can't remember how many apples there are in total!"<br/><br/>
+        "I have <strong>3 baskets</strong>, and each basket holds <strong>4 apples</strong>. That means I have <strong>3 groups of 4</strong>... but what's the total? I need your help!"
+      </div>
+      <div class="story-problem">
+        🤔 <strong>Stage 2 — The Problem:</strong> Can you help Madelyn figure out the total number of apples using <em>multiplication</em>? When we have equal groups, we multiply!
+      </div>
+      <div class="story-standard">
+        <div class="std-badge">3.OA.1</div>
+        <div>Interpret products of whole numbers — understand what multiplication means with equal groups</div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <button class="btn btn-yellow" onclick="goTo('screen-game')" style="font-size:1.1rem;padding:14px 36px;">
+          Let's Go! 🚀
+        </button>
+        <button class="btn btn-outline" onclick="goTo('screen-classroom')" style="font-size:1rem;">
+          Not now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 5 — GAME
+═══════════════════════════════════ -->
+<div id="screen-game" class="screen">
+  <div class="game-topbar">
+    <div class="game-level">🧮 Multiplication Groups · Level 1</div>
+    <div class="game-progress-dots" id="gameProgressDots">
+      <div class="gpd current" id="gpd0"></div>
+      <div class="gpd" id="gpd1"></div>
+      <div class="gpd" id="gpd2"></div>
+      <div class="gpd" id="gpd3"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="game-q-counter" id="gameQCounter">Question 1 of 4</div>
+      <button class="game-exit" onclick="confirmExit()">✕</button>
+    </div>
+  </div>
+
+  <div class="game-area" id="gameArea">
+    <!-- Injected by JS -->
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 6 — ASSESSMENT
+═══════════════════════════════════ -->
+<div id="screen-assessment" class="screen">
+  <div class="assessment-header">
+    <div>
+      <div class="assessment-title">📝 Practice Assessment — 3.OA.1</div>
+      <div style="font-size:0.75rem;opacity:0.8;margin-top:2px;">Multiplication as Equal Groups</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="assessment-standard-chip">3.OA.1 · 3.OA.2 · 3.OA.3</div>
+      <button class="btn-back" onclick="goTo('screen-game')">← Back to Game</button>
+    </div>
+  </div>
+
+  <div class="assessment-body">
+    <div class="assessment-intro">
+      Great job finishing the game, <strong id="assessPlayerName">Emma</strong>! Now let's check your understanding with a few quick questions. Choose the best answer for each one. 💪
+    </div>
+
+    <!-- Q1 -->
+    <div class="assessment-q" id="aq1">
+      <div class="aq-num">Question 1 of 4</div>
+      <div class="aq-text">Madelyn has 4 bags with 6 marbles in each bag. Which equation shows the TOTAL number of marbles?</div>
+      <div class="aq-options">
+        <button class="aq-option" onclick="answerQ(1, this, false)">4 + 6 = 10</button>
+        <button class="aq-option" onclick="answerQ(1, this, true)">4 × 6 = 24</button>
+        <button class="aq-option" onclick="answerQ(1, this, false)">6 − 4 = 2</button>
+        <button class="aq-option" onclick="answerQ(1, this, false)">4 + 4 + 4 = 12</button>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="assessment-q" id="aq2">
+      <div class="aq-num">Question 2 of 4</div>
+      <div class="aq-text">What does 5 × 3 mean?</div>
+      <div class="aq-options">
+        <button class="aq-option" onclick="answerQ(2, this, false)">5 more than 3</button>
+        <button class="aq-option" onclick="answerQ(2, this, true)">5 groups of 3</button>
+        <button class="aq-option" onclick="answerQ(2, this, false)">5 take away 3</button>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="assessment-q" id="aq3">
+      <div class="aq-num">Question 3 of 4</div>
+      <div class="aq-text">There are 3 rows of stars, and each row has 7 stars. Which multiplication sentence tells us how many stars in all?</div>
+      <div class="aq-options">
+        <button class="aq-option" onclick="answerQ(3, this, false)">7 + 3 = 10</button>
+        <button class="aq-option" onclick="answerQ(3, this, false)">3 + 7 + 3 = 13</button>
+        <button class="aq-option" onclick="answerQ(3, this, true)">3 × 7 = 21</button>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="assessment-q" id="aq4">
+      <div class="aq-num">Question 4 of 4</div>
+      <div class="aq-text">Madelyn puts 2 apples in each of her 8 baskets. She writes "2 × 8." Is this the RIGHT way to show the total?</div>
+      <div class="aq-options">
+        <button class="aq-option" onclick="answerQ(4, this, true)">Yes — 2 × 8 means 8 groups of 2</button>
+        <button class="aq-option" onclick="answerQ(4, this, false)">No — you should add: 2 + 8 = 10</button>
+        <button class="aq-option" onclick="answerQ(4, this, false)">No — multiplication only works for big numbers</button>
+      </div>
+    </div>
+
+    <!-- Standards Alignment Panel -->
+    <div class="standards-panel">
+      <div class="std-panel-title">📐 Standards Alignment</div>
+      <div class="std-item">
+        <div class="std-code">3.OA.1</div>
+        <div class="std-desc">Interpret products of whole numbers, e.g., interpret 5 × 7 as the total number of objects in 5 groups of 7 objects each.</div>
+      </div>
+      <div class="std-item">
+        <div class="std-code">3.OA.2</div>
+        <div class="std-desc">Interpret whole-number quotients — understand division as sharing equally or measuring out groups.</div>
+      </div>
+      <div class="std-item">
+        <div class="std-code">3.OA.3</div>
+        <div class="std-desc">Use multiplication and division within 100 to solve word problems involving equal groups, arrays, and measurement quantities.</div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid #DDD6FE;">
+        <div class="std-item">
+          <div class="std-code" style="background:var(--blue);">CCSS</div>
+          <div class="std-desc">Common Core State Standards · Grade 3 · Operations & Algebraic Thinking</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- iReady Optional Assessment -->
+    <div class="iready-panel">
+      <div class="iready-logo">📊</div>
+      <div class="iready-text">
+        <div class="iready-title">Optional: Take the iReady Diagnostic</div>
+        <div class="iready-desc">Get a personalized assessment of Emma's 3.OA.1 mastery level with an iReady-style adaptive quiz. Helps parents & teachers see exact skill levels.</div>
+      </div>
+      <button class="iready-btn" onclick="showIReadyInfo()">Start iReady →</button>
+    </div>
+  </div>
+
+  <div class="assessment-footer">
+    <div style="font-size:0.85rem;font-weight:700;color:#374151;">
+      Answered: <span id="answeredCount">0</span>/4 questions
+    </div>
+    <button class="btn btn-green" id="submitAssessmentBtn" onclick="submitAssessment()" disabled style="opacity:0.5;cursor:not-allowed;">
+      See My Results! 🎯
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 7 — ASSESSMENT RESULTS
+═══════════════════════════════════ -->
+<div id="screen-results" class="screen" style="position:relative;">
+  <div class="results-card animate-fade">
+    <div class="results-header">
+      <div class="results-char" id="resultsChar">🧒‍♀️</div>
+      <div class="results-title-group">
+        <div class="results-score-big great" id="resultsScoreDisplay">4/4</div>
+        <div class="results-message" id="resultsMessage">Amazing! You're a Multiplication Master! 🌟</div>
+        <div style="font-size:0.8rem;color:#6B7280;margin-top:4px;font-weight:600;" id="resultsPlayerLine">Emma · Standard 3.OA.1 · Multiplication Groups</div>
+      </div>
+    </div>
+
+    <div class="results-stats">
+      <div class="stat-box correct-stat">
+        <div class="stat-num" id="correctCount">4</div>
+        <div class="stat-label">✅ Correct</div>
+      </div>
+      <div class="stat-box wrong-stat">
+        <div class="stat-num" id="wrongCount">0</div>
+        <div class="stat-label">❌ To Review</div>
+      </div>
+      <div class="stat-box pct-stat">
+        <div class="stat-num" id="accuracyPct">100%</div>
+        <div class="stat-label">🎯 Accuracy</div>
+      </div>
+      <div class="stat-box" style="border-color:#DDD6FE;">
+        <div class="stat-num" style="color:var(--purple);">⭐⭐⭐</div>
+        <div class="stat-label">Stars Earned</div>
+      </div>
+    </div>
+
+    <div class="results-breakdown">
+      <div class="results-breakdown-title">Question Review</div>
+      <div id="resultsBreakdown"></div>
+    </div>
+
+    <div style="background:#EDE9FE;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+      <div class="std-badge">3.OA.1</div>
+      <div style="font-size:0.8rem;color:var(--purple);font-weight:700;">
+        Mastery level: <span id="masteryLevel" style="font-weight:900;">Proficient 🌟</span>
+      </div>
+    </div>
+  </div>
+  <button class="claim-badge-btn" onclick="claimBadge()">
+    🏆 Claim Your Badge!
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════
+     SCREEN 8 — CONGRATULATIONS
+═══════════════════════════════════ -->
+<div id="screen-congrats" class="screen">
+  <div id="confettiContainer"></div>
+  <div class="congrats-inner">
+    <div class="congrats-char">🧒‍♀️</div>
+    <div class="congrats-title">You Did It! 🎉</div>
+    <div class="badge-container">
+      <div class="badge-sparkles">
+        <span class="sparkle" style="top:0;left:50%;animation-delay:0.2s;">✨</span>
+        <span class="sparkle" style="top:50%;right:0;animation-delay:0.4s;">⭐</span>
+        <span class="sparkle" style="bottom:0;left:30%;animation-delay:0.6s;">✨</span>
+        <span class="sparkle" style="top:20%;left:0;animation-delay:0.3s;">🌟</span>
+      </div>
+      <div class="badge-emoji">🏆</div>
+    </div>
+    <div class="badge-name">🍎 Multiplication Master Badge</div>
+    <div class="stars-row">⭐⭐⭐</div>
+    <div class="congrats-message" id="congratsMessage">
+      "You did it, Emma! The apples are all counted! You are SO amazing at multiplication! You showed that 3 × 4 means 3 groups of 4! I'm SO proud of you!" 💜
+    </div>
+    <div style="background:rgba(255,255,255,0.1);border-radius:14px;padding:10px 20px;font-size:0.8rem;color:rgba(255,255,255,0.7);font-weight:600;text-align:center;">
+      ✅ Standard Mastered: <strong style="color:var(--yellow-light);">3.OA.1</strong> — Interpret Products of Whole Numbers<br/>
+      <span style="font-size:0.7rem;opacity:0.7;">Grade 3 · Operations &amp; Algebraic Thinking · CCSS</span>
+    </div>
+    <div class="congrats-btns">
+      <button class="btn btn-yellow" onclick="goTo('screen-classroom')" style="font-size:0.95rem;padding:12px 28px;">
+        🔍 Explore More!
+      </button>
+      <button class="btn" style="background:rgba(255,255,255,0.15);color:white;border:2px solid rgba(255,255,255,0.3);font-size:0.95rem;padding:12px 28px;" onclick="goTo('screen-hub')">
+        🏠 Back to Hub
+      </button>
+    </div>
+    <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:4px;">✕ Tap to dismiss badge</div>
+  </div>
+</div>
+
+<!-- COMING SOON TOOLTIP -->
+<div id="globalTip" class="coming-soon-tooltip"></div>
+
+<script>
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+let currentPlayer = 'Emma';
+let gameState = {
+  currentQ: 0,
+  answers: [],
+  correctCount: 0,
+};
+let assessmentAnswers = {};
+let assessmentCorrect = 0;
+
+/* ══════════════════════════════════════
+   GAME DATA — 3.OA.1
+══════════════════════════════════════ */
+const gameQuestions = [
+  {
+    text: "Madelyn has 3 baskets. Each basket holds 4 apples. Which multiplication sentence shows the total?",
+    visual: { type: 'groups', groups: 3, perGroup: 4, emoji: '🍎' },
+    options: [
+      { emoji: '➕', text: '3 + 4 = 7', correct: false },
+      { emoji: '✖️', text: '3 × 4 = 12', correct: true },
+      { emoji: '➖', text: '4 − 3 = 1', correct: false },
+    ]
+  },
+  {
+    text: "There are 5 rows of stars, with 2 stars in each row. What is 5 × 2?",
+    visual: { type: 'array', rows: 5, cols: 2, emoji: '⭐' },
+    options: [
+      { emoji: '🔟', text: '10', correct: true },
+      { emoji: '7️⃣', text: '7', correct: false },
+      { emoji: '3️⃣', text: '3', correct: false },
+    ]
+  },
+  {
+    text: "Which picture best shows what 2 × 6 means?",
+    visual: { type: 'text', content: '2 × 6 means...' },
+    options: [
+      { emoji: '2️⃣', text: '2 groups of 6', correct: true },
+      { emoji: '6️⃣', text: '6 groups of 2', correct: false },
+      { emoji: '📐', text: '2 plus 6', correct: false },
+    ]
+  },
+  {
+    text: "Madelyn makes 4 bags of cookies with 3 cookies in each bag. How many cookies are there altogether?",
+    visual: { type: 'groups', groups: 4, perGroup: 3, emoji: '🍪' },
+    options: [
+      { emoji: '🔢', text: '7 cookies', correct: false },
+      { emoji: '🔢', text: '12 cookies', correct: true },
+      { emoji: '🔢', text: '16 cookies', correct: false },
+    ]
+  }
+];
+
+/* ══════════════════════════════════════
+   NAV
+══════════════════════════════════════ */
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(screenId);
+  if (target) {
+    target.classList.add('active');
+    target.style.animation = 'fadeIn 0.35s ease forwards';
+  }
+  if (screenId === 'screen-game') initGame();
+  if (screenId === 'screen-assessment') {
+    document.getElementById('assessPlayerName').textContent = currentPlayer;
+    resetAssessment();
+  }
+  if (screenId === 'screen-congrats') launchConfetti();
+}
+
+function selectProfile(name) {
+  currentPlayer = name;
+  document.getElementById('hubPlayerName').textContent = name;
+  goTo('screen-hub');
+}
+
+function enterMadelyn() {
+  goTo('screen-classroom');
+  setTimeout(() => {
+    const bubble = document.getElementById('classroomSpeech');
+    if (bubble) {
+      bubble.style.display = 'block';
+      setTimeout(() => { bubble.style.opacity = '0'; bubble.style.transition = 'opacity 0.5s'; setTimeout(() => { bubble.style.display = 'none'; bubble.style.opacity = '1'; bubble.style.transition = ''; }, 500); }, 4000);
+    }
+  }, 300);
+}
+
+function startActivity(type) {
+  goTo('screen-story');
+}
+
+function toggleSpeech() {
+  const bubble = document.getElementById('classroomSpeech');
+  if (!bubble) return;
+  if (bubble.style.display === 'none') {
+    bubble.style.display = 'block';
+    bubble.style.animation = 'bubble-in 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards';
+  } else {
+    bubble.style.display = 'none';
+  }
+}
+
+function showComingSoon(el, msg) {
+  const tip = document.getElementById('globalTip');
+  const rect = el.getBoundingClientRect();
+  tip.textContent = '🔒 ' + msg;
+  tip.style.left = (rect.left + rect.width/2) + 'px';
+  tip.style.top = (rect.top - 48) + 'px';
+  tip.classList.add('show');
+  setTimeout(() => tip.classList.remove('show'), 2200);
+
+  /* shake animation on locked char */
+  el.style.animation = 'shake 0.4s forwards';
+  setTimeout(() => el.style.animation = '', 500);
+}
+
+function confirmExit() {
+  if (confirm('Want to stop? Your progress will be saved. Leave game?')) {
+    goTo('screen-classroom');
+  }
+}
+
+/* ══════════════════════════════════════
+   GAME ENGINE
+══════════════════════════════════════ */
+function initGame() {
+  gameState = { currentQ: 0, answers: [], correctCount: 0 };
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = gameQuestions[gameState.currentQ];
+  const area = document.getElementById('gameArea');
+  const counter = document.getElementById('gameQCounter');
+  counter.textContent = `Question ${gameState.currentQ + 1} of ${gameQuestions.length}`;
+
+  /* update progress dots */
+  for (let i = 0; i < gameQuestions.length; i++) {
+    const dot = document.getElementById('gpd' + i);
+    if (!dot) continue;
+    dot.className = 'gpd';
+    if (i < gameState.currentQ) dot.classList.add('done');
+    else if (i === gameState.currentQ) dot.classList.add('current');
+  }
+
+  /* build visual */
+  let visualHTML = '';
+  if (q.visual.type === 'groups') {
+    visualHTML = '<div class="game-q-visual">';
+    for (let g = 0; g < q.visual.groups; g++) {
+      visualHTML += '<div class="apple-group">';
+      for (let a = 0; a < q.visual.perGroup; a++) {
+        visualHTML += `<span class="apple">${q.visual.emoji}</span>`;
+      }
+      visualHTML += '</div>';
+      if (g < q.visual.groups - 1) visualHTML += '<div class="times-sign">+</div>';
+    }
+    visualHTML += '</div>';
+  } else if (q.visual.type === 'array') {
+    visualHTML = '<div class="game-q-visual" style="flex-direction:column;gap:6px;">';
+    for (let r = 0; r < q.visual.rows; r++) {
+      visualHTML += '<div style="display:flex;gap:6px;">';
+      for (let c = 0; c < q.visual.cols; c++) {
+        visualHTML += `<span style="font-size:1.4rem;">${q.visual.emoji}</span>`;
+      }
+      visualHTML += '</div>';
+    }
+    visualHTML += '</div>';
+  } else {
+    visualHTML = `<div class="game-q-visual"><div style="font-size:2.5rem;font-weight:900;color:var(--purple);">${q.visual.content}</div></div>`;
+  }
+
+  area.innerHTML = `
+    <div class="game-question-card animate-fade">
+      <div class="game-q-label">🍎 Standard 3.OA.1 — Equal Groups</div>
+      <div class="game-q-text">${q.text}</div>
+      ${visualHTML}
+    </div>
+    <div class="answer-grid">
+      ${q.options.map((opt, i) => `
+        <div class="answer-card" onclick="selectAnswer(${i})">
+          <div class="ans-emoji">${opt.emoji}</div>
+          <div class="ans-text">${opt.text}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="game-hint-row">💡 Think about equal groups! Each basket has the same amount.</div>
+  `;
+}
+
+function selectAnswer(optIndex) {
+  const q = gameQuestions[gameState.currentQ];
+  const opt = q.options[optIndex];
+  const cards = document.querySelectorAll('.answer-card');
+
+  cards.forEach(c => c.classList.add('disabled'));
+
+  if (opt.correct) {
+    cards[optIndex].classList.add('correct');
+    gameState.correctCount++;
+    gameState.answers.push({ correct: true, optIndex });
+
+    /* small Madelyn cheer bubble */
+    showGameFeedback('✅ Awesome! That\'s right!', true);
+
+    setTimeout(() => {
+      gameState.currentQ++;
+      if (gameState.currentQ >= gameQuestions.length) {
+        finishGame();
+      } else {
+        renderQuestion();
+      }
+    }, 1200);
+  } else {
+    cards[optIndex].classList.add('wrong');
+    gameState.answers.push({ correct: false, optIndex });
+
+    showGameFeedback('🤔 Not quite — try again!', false);
+
+    setTimeout(() => {
+      cards[optIndex].classList.remove('wrong', 'disabled');
+      cards.forEach(c => c.classList.remove('disabled'));
+      removeGameFeedback();
+    }, 900);
+    gameState.answers.pop();
+  }
+}
+
+function showGameFeedback(msg, correct) {
+  removeGameFeedback();
+  const fb = document.createElement('div');
+  fb.id = 'gameFeedback';
+  fb.style.cssText = `
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+    background:${correct ? '#10B981' : '#F59E0B'}; color:white;
+    padding:10px 24px; border-radius:50px; font-weight:800; font-size:1rem;
+    box-shadow:0 4px 20px rgba(0,0,0,0.2); z-index:100;
+    animation:pop 0.3s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+  `;
+  fb.textContent = msg;
+  document.body.appendChild(fb);
+}
+
+function removeGameFeedback() {
+  const old = document.getElementById('gameFeedback');
+  if (old) old.remove();
+}
+
+function finishGame() {
+  removeGameFeedback();
+  goTo('screen-assessment');
+}
+
+/* ══════════════════════════════════════
+   ASSESSMENT ENGINE
+══════════════════════════════════════ */
+function resetAssessment() {
+  assessmentAnswers = {};
+  assessmentCorrect = 0;
+  document.getElementById('answeredCount').textContent = '0';
+  document.getElementById('submitAssessmentBtn').disabled = true;
+  document.getElementById('submitAssessmentBtn').style.opacity = '0.5';
+  document.getElementById('submitAssessmentBtn').style.cursor = 'not-allowed';
+
+  document.querySelectorAll('.aq-option').forEach(btn => {
+    btn.classList.remove('selected', 'correct-ans', 'wrong-ans');
+    btn.disabled = false;
+  });
+}
+
+function answerQ(qNum, btn, isCorrect) {
+  /* deselect others in same question */
+  const qDiv = document.getElementById('aq' + qNum);
+  qDiv.querySelectorAll('.aq-option').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  assessmentAnswers[qNum] = { btn, isCorrect };
+
+  const count = Object.keys(assessmentAnswers).length;
+  document.getElementById('answeredCount').textContent = count;
+
+  if (count >= 4) {
+    document.getElementById('submitAssessmentBtn').disabled = false;
+    document.getElementById('submitAssessmentBtn').style.opacity = '1';
+    document.getElementById('submitAssessmentBtn').style.cursor = 'pointer';
+  }
+}
+
+function submitAssessment() {
+  assessmentCorrect = 0;
+  const questions = [
+    { text: 'Madelyn: 4 bags × 6 marbles', correct: '4 × 6 = 24' },
+    { text: 'What does 5 × 3 mean?', correct: '5 groups of 3' },
+    { text: '3 rows of 7 stars', correct: '3 × 7 = 21' },
+    { text: '2 apples in 8 baskets = 2 × 8?', correct: 'Yes — 2 × 8 means 8 groups of 2' },
+  ];
+  const breakdown = [];
+
+  for (let qNum = 1; qNum <= 4; qNum++) {
+    const ans = assessmentAnswers[qNum];
+    if (ans) {
+      const qDiv = document.getElementById('aq' + qNum);
+      qDiv.querySelectorAll('.aq-option').forEach(btn => {
+        if (btn === ans.btn) {
+          btn.classList.remove('selected');
+          btn.classList.add(ans.isCorrect ? 'correct-ans' : 'wrong-ans');
+        }
+        btn.disabled = true;
+      });
+      if (ans.isCorrect) assessmentCorrect++;
+      breakdown.push({
+        qText: questions[qNum - 1].text,
+        correct: ans.isCorrect,
+        correctAnswer: questions[qNum - 1].correct,
+        givenAnswer: ans.btn.textContent.trim(),
+      });
+    }
+  }
+
+  /* populate results screen */
+  document.getElementById('correctCount').textContent = assessmentCorrect;
+  document.getElementById('wrongCount').textContent = 4 - assessmentCorrect;
+  const pct = Math.round((assessmentCorrect / 4) * 100);
+  document.getElementById('accuracyPct').textContent = pct + '%';
+  document.getElementById('resultsPlayerLine').textContent = `${currentPlayer} · Standard 3.OA.1 · Multiplication Groups`;
+  document.getElementById('congratsMessage').textContent =
+    `"You did it, ${currentPlayer}! The apples are all counted! You are SO amazing at multiplication! I'm SO proud of you!" 💜`;
+
+  const scoreEl = document.getElementById('resultsScoreDisplay');
+  scoreEl.textContent = `${assessmentCorrect}/4`;
+  scoreEl.className = 'results-score-big';
+  if (assessmentCorrect === 4) {
+    scoreEl.classList.add('great');
+    document.getElementById('resultsMessage').textContent = 'Amazing! You\'re a Multiplication Master! 🌟';
+    document.getElementById('masteryLevel').textContent = 'Mastered 🏆';
+  } else if (assessmentCorrect >= 3) {
+    scoreEl.classList.add('good');
+    document.getElementById('resultsMessage').textContent = 'Great job! Almost perfect! 🎉';
+    document.getElementById('masteryLevel').textContent = 'Proficient ⭐';
+  } else {
+    scoreEl.classList.add('try');
+    document.getElementById('resultsMessage').textContent = 'Good try! Keep practicing! 💪';
+    document.getElementById('masteryLevel').textContent = 'Developing 📚';
+  }
+
+  const breakdownDiv = document.getElementById('resultsBreakdown');
+  breakdownDiv.innerHTML = breakdown.map(b => `
+    <div class="result-row ${b.correct ? 'r-correct' : 'r-wrong'}">
+      <span class="result-icon">${b.correct ? '✅' : '❌'}</span>
+      <span class="result-q-text">${b.qText}</span>
+      <span class="result-answer">${b.correct ? b.givenAnswer : '✓ ' + b.correctAnswer}</span>
+    </div>
+  `).join('');
+
+  goTo('screen-results');
+}
+
+function claimBadge() {
+  goTo('screen-congrats');
+}
+
+function showIReadyInfo() {
+  alert('🎓 iReady Diagnostic\n\nThis would launch an adaptive iReady-style assessment aligned to 3.OA.1.\n\nIn the full product, this connects to your district\'s iReady platform for official diagnostic data.\n\n(Prototype placeholder — iReady integration is optional)');
+}
+
+/* ══════════════════════════════════════
+   CONFETTI
+══════════════════════════════════════ */
+function launchConfetti() {
+  const container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  const colors = ['#F59E0B','#EC4899','#7C3AED','#10B981','#3B82F6','#F97316','#FBBF24'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const left = Math.random() * 1024;
+    const delay = Math.random() * 1.5;
+    const dur = 2 + Math.random() * 2;
+    const size = 6 + Math.random() * 10;
+    piece.style.cssText = `
+      left:${left}px; top:-20px; background:${color};
+      width:${size}px; height:${size}px;
+      animation-duration:${dur}s; animation-delay:${delay}s;
+      border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+    `;
+    container.appendChild(piece);
+  }
+}
+
+/* ══════════════════════════════════════
+   STAR FIELD (welcome screen)
+══════════════════════════════════════ */
+function buildStarField() {
+  const field = document.getElementById('starField');
+  if (!field) return;
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = 1 + Math.random() * 3;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      animation-delay:${Math.random()*3}s;
+      opacity:${0.4 + Math.random()*0.6};
+    `;
+    field.appendChild(s);
+  }
+}
+buildStarField();
+</script>
+</body>
+</html>
